@@ -3,6 +3,11 @@ namespace chess;
 
 require('vendor/autoload.php');
 
+// No maximum memory or time limit
+ini_set('memory_limit', -1);
+set_time_limit(0);
+
+
 print "Chess by Tim Anthony Alexander with custom engine.".PHP_EOL;
 print "Notation style: E2E4, E7E5, B2C3, etc".PHP_EOL.PHP_EOL;
 

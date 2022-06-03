@@ -65,6 +65,13 @@ abstract class Piece {
         $ownKing = $this->board->getPiecesOf('K', $this->getColor())[0];
         assert($ownKing instanceof King);
         if ($this->getNotation() === 'K' ? $ownKing->wouldBeCheck($x, $y, $checkCheck-1) : $ownKing->wouldBeCheck($ownKing->getX(), $ownKing->getY(), $checkCheck-1)) {
+            if ($this->board->checkCheck($checkCheck)){
+                $fakeBoard = clone $this->board;
+                $fakeBoard->movePiece($this, $x, $y, true, last: true);
+                if($fakeBoard->checkCheck($checkCheck)){
+                    return true;
+                }
+            }
             return false;
         }
         return true;

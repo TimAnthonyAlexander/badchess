@@ -75,17 +75,32 @@ class Board {
         print('Game ran successfully'.PHP_EOL);
     }
 
-    public function isCheck(): void {
+    public function checkCheck(int $checkCheck = 2): bool {
         $king = $this->getPiecesOf('K', ($this->lastMove[2] === 'w' ? 'b' : 'w'))[0];
         assert($king instanceof King);
-        if ($king->isInCheck(1)) {
+        return $king->isInCheck($checkCheck-1);
+    }
+
+    public function checkMate(): bool {
+        if ($this->checkCheck(2)){
+            $king = $this->getPiecesOf('K', ($this->lastMove[2] === 'w' ? 'b' : 'w'))[0];
+            assert($king instanceof King);
+            $moves = $king->getMoves();
+            foreach($moves as $move){
+                if($move[0]->getNotation() === 'K' ? $king->wouldBeCheck($move[1], $move[2], 1) : $king->isInCheck(1)){
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    public function isCheck(): void {
+        if ($this->checkCheck()) {
             print('Check!'.PHP_EOL);
         }
-        $moves = $king->getMoves();
-        foreach ($moves as $move) {
-            if ($move[0]->getNotation() === 'K' ? $king->wouldBeCheck($move[1], $move[2], 1) : $king->isInCheck(1)) {
-                print('Checkmated!'.PHP_EOL);
-            }
+        if ($this->checkMate()) {
+            print('Checkmate!'.PHP_EOL);
         }
     }
 
@@ -304,7 +319,7 @@ class Board {
         return $pieces;
     }
 
-    public function movePiece(Piece $piece, int $x, int $y, bool $fake = false): bool {
+    public function movePiece(Piece $piece, int $x, int $y, bool $fake = false, bool $last = false): bool {
         if ($fake) {
             $piece = clone $piece;
         }
@@ -315,7 +330,7 @@ class Board {
             printf("%s is not your turn to do %s.%s", $piece->getColor(), self::translateXYToNotation($x, $y) , PHP_EOL);
             return false;
         }
-        if ($piece->canDo($x, $y)) {
+        if ($piece->canDo($x, $y, 1)) {
             $this->board[$x-1][$y-1] = $piece;
             $this->board[$piece->getX()-1][$piece->getY()-1] = null;
             $piece->do($x, $y);

@@ -3,7 +3,12 @@ namespace chess;
 
 require('vendor/autoload.php');
 
+// No maximum memory or time limit
 
+/*
+ini_set('memory_limit', -1);
+set_time_limit(0);
+*/
 
 $ml = new ML();
 
@@ -15,12 +20,12 @@ $board = new Board($ml, false);
 // Example game:
 $game = [
     'E2E4',
-    'E7E5',
-    'D1H5',
-    'A7A6',
-    'F1C4',
     'B8C6',
-    'H5F7',
+    'B1C3',
+    'C6D4',
+    'G1F3',
+    'D4F3',
+    'G2F3',
 ];
 
 
