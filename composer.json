@@ -1,0 +1,15 @@
+{
+    "name": "tim.alexander/chess",
+    "authors": [
+        {
+            "name": "Tim Alexander",
+            "email": "tim.alexander@check24.de"
+        }
+    ],
+    "autoload": {
+        "classmap": [
+            "./"
+        ]
+    },
+    "require": {}
+}
