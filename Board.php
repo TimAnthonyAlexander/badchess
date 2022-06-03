@@ -112,6 +112,44 @@ class Board {
             $black['score'] += self::PIECE_WORTH[$blackPiece->getNotation()];
         }
 
+        foreach ($black['pieces'] as $blackPiece) {
+            assert($blackPiece instanceof Piece);
+            // Check if position is identical to default
+            $notation = $blackPiece->getNotation();
+            $isDefault = match($notation){
+                'P' => in_array([$blackPiece->getX(), $blackPiece->getY()], [[1, 7], [2, 7], [3, 7], [4, 7], [5, 7], [6, 7], [7, 7], [8, 7]]),
+                'R' => in_array([$blackPiece->getX(), $blackPiece->getY()], [[1, 8], [8, 8]]),
+                'N' => in_array([$blackPiece->getX(), $blackPiece->getY()], [[2, 8], [7, 8]]),
+                'B' => in_array([$blackPiece->getX(), $blackPiece->getY()], [[3, 8], [6, 8]]),
+                'Q' => [$blackPiece->getX(), $blackPiece->getY()] == [4, 8],
+                'K' => [$blackPiece->getX(), $blackPiece->getY()] == [5, 8],
+                default => false,
+            };
+
+            if ($isDefault) {
+                $black['score'] -= self::PIECE_WORTH[$blackPiece->getNotation()] * 0.1;
+            }
+        }
+
+        foreach ($white['pieces'] as $whitePiece) {
+            assert($whitePiece instanceof Piece);
+            // Check if position is identical to default
+            $notation = $whitePiece->getNotation();
+            $isDefault = match($notation){
+                'P' => in_array([$whitePiece->getX(), $whitePiece->getY()], [[1, 2], [2, 2], [3, 2], [4, 2], [5, 2], [6, 2], [7, 2], [8, 2]]),
+                'R' => in_array([$whitePiece->getX(), $whitePiece->getY()], [[1, 1], [8, 1]]),
+                'N' => in_array([$whitePiece->getX(), $whitePiece->getY()], [[2, 1], [7, 1]]),
+                'B' => in_array([$whitePiece->getX(), $whitePiece->getY()], [[3, 1], [6, 1]]),
+                'Q' => [$whitePiece->getX(), $whitePiece->getY()] == [4, 1],
+                'K' => [$whitePiece->getX(), $whitePiece->getY()] == [5, 1],
+                default => false,
+            };
+
+            if ($isDefault) {
+                $white['score'] -= self::PIECE_WORTH[$whitePiece->getNotation()] * 0.1;
+            }
+        }
+
 
         if ($level > 0){
             $currentTurn = ($this->lastMove[2] ?? 'b') === 'w' ? 'b' : 'w';
@@ -366,17 +404,22 @@ class Board {
     }
 
     public function view() {
+        $lastMove = $this->lastMove;
+        if (!isset($lastMove[0]) && !isset($lastMove[1])) {
+            $lastMove = [0, 0, 'b'];
+        }
         for ($y = 7; $y >= 0; $y--) {
             for ($x = 0; $x < 8; $x++) {
                 $piece = $this->board[$x][$y];
-                if ($this->lastMove[0] === $x+1 && $this->lastMove[1] === $y+1) {
+                if ($lastMove[0] === $x+1 && $lastMove[1] === $y+1) {
                     echo '['.($piece ? $piece->toString() : '  ').']';
                 } else {
                     echo '('.($piece ? $piece->toString() : '  ').')';
                 }
             }
-            echo PHP_EOL;
+            echo '  '.($y+1).PHP_EOL;
         }
+        echo PHP_EOL.'( A)( B)( C)( D)( E)( F)( G)( H)'.PHP_EOL.PHP_EOL;
     }
 
     public function getBoardMD5(): string {

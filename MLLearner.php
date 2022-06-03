@@ -35,7 +35,7 @@ function entireGame(ML $ml, int $black = 0, int $white = 0, $counter = 0): array
             return entireGame($ml, $black, $white, $counter);
         }
         $color = $turn ? 'w' : 'b';
-        $random = rand(0,2) === 0;
+        $random = rand(0,1) === 0;
         $possibleMoves = $board->getMovesOf($color);
         if (count ($possibleMoves) === 0) {
             if ($color === 'w') {
@@ -60,7 +60,6 @@ function entireGame(ML $ml, int $black = 0, int $white = 0, $counter = 0): array
             assert(is_int($randomMove[2]));
             printf('Random move due to no recommendations: %s%s %s', Board::translateXYToNotation($randomMove[0]->getX(), $randomMove[0]->getY()), Board::translateXYToNotation($randomMove[1], $randomMove[2]), PHP_EOL);
             $board->movePiece($randomMove[0], $randomMove[1], $randomMove[2]);
-            entireGame($ml, $black, $white, $counter);
             $turn = !$turn;
             $ml->save();
             continue;

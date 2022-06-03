@@ -12,7 +12,10 @@ class Pawn extends Piece{
         if ($this->getColor() === 'w') {
             if ($y === $this->getY() + 1 || ($y === $this->getY() + 2 && $this->getLastMove() === [])) {
                 if ($x === $this->getX()) {
-                    return true;
+                    if ($this->board->getPiece($x, $y) === null) {
+                        return true;
+                    }
+                    return false;
                 }
             }
             if ($x === $this->getX() + 1 || $x === $this->getX() - 1) {
@@ -27,7 +30,10 @@ class Pawn extends Piece{
         } else {
             if ($y === $this->getY() - 1 || ($y === $this->getY() - 2 && $this->getLastMove() === [])) {
                 if ($x === $this->getX()) {
-                    return true;
+                    if ($this->board->getPiece($x, $y) === null) {
+                        return true;
+                    }
+                    return false;
                 }
             }
             if ($x === $this->getX() + 1 || $x === $this->getX() - 1) {
