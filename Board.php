@@ -466,4 +466,11 @@ class Board {
         $boardData['lastMove'] = $this->lastMove;
         return $boardData;
     }
+
+    /**
+     * @return array
+     */
+    public function getLastMove(): array{
+        return $this->lastMove;
+    }
 }

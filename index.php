@@ -1,5 +1,8 @@
 <?php
 namespace chess;
+ini_set('display_errors', 1);
+error_reporting(E_ALL);
+
 
 require(__DIR__.'/vendor/autoload.php');
 
@@ -20,15 +23,38 @@ $board = $_SESSION['board'];
 
 if ($_POST['move'] ?? false) {
     $action = Board::translateNormalNotationToAction($board, strtoupper($_POST['move']));
-    $board->movePiece($action[0], $action[1], $action[2]);
-    $eval = $board->evaluateBoard();
-    $rec = $board->recommendMove($eval);
-    $board->movePiece($board->getPiece($rec[1], $rec[2]), $rec[3], $rec[4]);
+    $movePiece = $board->movePiece($action[0], $action[1], $action[2]);
+    if ($movePiece){
+        $eval = $board->evaluateBoard();
+        $rec = $board->recommendMove($eval);
+        if ($rec[1] !== null){
+            $board->movePiece($board->getPiece($rec[1], $rec[2]), $rec[3], $rec[4]);
+        } else {
+            $randomMove = $board->getMovesOf('b', 1);
+            $randomMove = $randomMove[array_rand($randomMove)];
+            $board->movePiece($board->getPiece($randomMove[0], $randomMove[1]), $randomMove[2], $randomMove[3]);
+        }
+    } else {
+        print ("Try another move.");
+    }
     $_SESSION['board'] = $board;
+}
+
+$eval = $board->evaluateBoard();
+
+if (isset($eval)) {
+    $eval > 0
+        ? print("The evaluation is currently ".$eval." in favor of white.<br>")
+        : print("The evaluation is currently ".$eval." in favor of black.<br>");
 }
 
 
 $getBoard = $board->getBoard();
+$lastMove = $board->getLastMove();
+if ($lastMove !== []){
+    $translation = Board::translateXYToNotation($lastMove[0], $lastMove[1]);
+    print ("<h3>Last move: " . $translation . " " . $lastMove[2] . "</h3>");
+}
 unset($getBoard['lastMove']);
 
 foreach ($getBoard as $key => $column) {
@@ -81,12 +107,18 @@ $color = 'white';
 foreach ($row as $key => $column) {
     echo '<tr>';
     foreach ($column as $subkey => $piece) {
+        $posY = 8-$key;
+        $posX = $subkey+1;
         $textcolor = $color;
+        $isLast = false;
         $color = ($color === 'white' ? 'gray' : 'white');
-        if ($piece === '') {
-            echo '<td style="height: 62px; width: 62px; background-color: '.$color.'; color: '.$textcolor.';"> </td>';
+        if (isset($lastMove[1]) && $posX === $lastMove[0] && $posY === $lastMove[1]) {
+            $isLast = true;
+        }
+        if (trim($piece) === '') {
+            echo '<td style="height: 62px; width: 62px; background-color: '.($isLast ? 'red' : $color).'; color: '.$textcolor.';">'.Board::translateXYToNotation($posX, $posY).' </td>';
         } else{
-            echo '<td style="height: 62px; width: 62px; background-color: ' . $color . '; color: ' . $textcolor . '"><img src="'.getImage($piece).'"></td>';
+            echo '<td style="height: 62px; width: 62px; background-color: ' . ($isLast ? 'red' : $color) . '; color: ' . $textcolor . '"><img src="'.getImage($piece).'"></td>';
         }
     }
     echo '</tr>';
