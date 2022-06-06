@@ -117,6 +117,16 @@ class Board {
         $white['score'] = 0;
         $black['score'] = 0;
 
+        foreach ($white['pieces'] as $whitePiece) {
+            assert($whitePiece instanceof Piece);
+            $white['score'] += self::PIECE_WORTH[$whitePiece->getNotation()];
+        }
+
+        foreach ($black['pieces'] as $blackPiece) {
+            assert($blackPiece instanceof Piece);
+            $black['score'] += self::PIECE_WORTH[$blackPiece->getNotation()];
+        }
+
         foreach ($black['pieces'] as $blackPiece) {
             assert($blackPiece instanceof Piece);
             // Check if position is identical to default
@@ -153,16 +163,6 @@ class Board {
             if ($isDefault) {
                 $white['score'] -= self::PIECE_WORTH[$whitePiece->getNotation()] * 0.1;
             }
-        }
-
-        foreach ($white['pieces'] as $whitePiece) {
-            assert($whitePiece instanceof Piece);
-            $white['score'] += self::PIECE_WORTH[$whitePiece->getNotation()];
-        }
-
-        foreach ($black['pieces'] as $blackPiece) {
-            assert($blackPiece instanceof Piece);
-            $black['score'] += self::PIECE_WORTH[$blackPiece->getNotation()];
         }
 
         $whiteMoves = $this->getMovesOf('w');

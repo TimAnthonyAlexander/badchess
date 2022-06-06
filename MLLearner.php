@@ -7,8 +7,7 @@ $ml = new ML();
 
 $results = entireGame($ml);
 
-$white = $results[0];
-$black = $results[1];
+[$white, $black] = $results;
 
 printf("White won %d times\n", $white);
 printf("Black won %d times\n", $black);
@@ -16,7 +15,7 @@ printf("Black won %d times\n", $black);
 function entireGame(ML $ml, int $black = 0, int $white = 0, $counter = 0): array {
     print('New game.'. PHP_EOL);
     $counter++;
-    if ($counter > 2) {
+    if ($counter > 50) {
         return [$white, $black];
     }
     $board = new Board($ml);
@@ -46,7 +45,7 @@ function entireGame(ML $ml, int $black = 0, int $white = 0, $counter = 0): array
             return entireGame($ml, $black, $white, $counter);
         }
         $randomMove = $possibleMoves[rand(0, count($possibleMoves) - 1)];
-        $rec = $random ? $randomMove : $board->recommendMove($board->evaluateBoard(2));
+        $rec = $random ? $randomMove : $board->recommendMove($board->evaluateBoard(3));
         if(!isset($rec[3])){
             $rec = $board->recommendMove($board->evaluateBoard(3, false), false);
         }
