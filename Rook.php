@@ -9,21 +9,41 @@ class Rook extends Piece{
         if (!parent::canDo($x, $y, $checkCheck)) {
             return false;
         }
-        if ($this->getX() === $x) {
-            for ($i = min($this->getY(), $y); $i < max($this->getY(), $y); $i++) {
-                if ($this->board->getPiece($x, $i) !== null) {
-                    return false;
+        if ($y === $this->getY() && $x !== $this->getX()) {
+            if ($x < $this->getX()) {
+                for ($i = $this->getX()-1; $i > $x; $i--) {
+                    if ($this->board->getPiece($i, $y) !== null) {
+                        return false;
+                    }
                 }
+                return true;
             }
-            return true;
+            if ($x > $this->getX()) {
+                for ($i = $this->getX()+1; $i < $x; $i++) {
+                    if ($this->board->getPiece($i, $y) !== null) {
+                        return false;
+                    }
+                }
+                return true;
+            }
         }
-        if ($this->getY() === $y) {
-            for ($i = min($this->getX(), $x); $i < max($this->getX(), $x); $i++) {
-                if ($this->board->getPiece($i, $y) !== null) {
-                    return false;
+        if ($x === $this->getX() && $y !== $this->getY()) {
+            if ($y < $this->getY()) {
+                for ($i = $this->getY()-1; $i > $y; $i--) {
+                    if ($this->board->getPiece($x, $i) !== null) {
+                        return false;
+                    }
                 }
+                return true;
             }
-            return true;
+            if ($y > $this->getY()) {
+                for ($i = $this->getY()+1; $i < $y; $i++) {
+                    if ($this->board->getPiece($x, $i) !== null) {
+                        return false;
+                    }
+                }
+                return true;
+            }
         }
         if ($this->board->getPiece($x, $y) !== null && $this->board->getPiece($x, $y)->getColor() === $this->getColor()) {
             return $ignoreOwn;

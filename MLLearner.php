@@ -48,9 +48,6 @@ function entireGame(ML $ml, int $black = 0, int $white = 0, $counter = 0): array
         $randomMove = $possibleMoves[rand(0, count($possibleMoves) - 1)];
         $rec = $random ? $randomMove : $board->recommendMove($board->evaluateBoard(2));
         if(!isset($rec[3])){
-            $rec = $board->recommendMove($board->evaluateBoard(2, false), false);
-        }
-        if(!isset($rec[3])){
             $rec = $board->recommendMove($board->evaluateBoard(3, false), false);
         }
         if(!isset($rec[3])){
@@ -67,6 +64,7 @@ function entireGame(ML $ml, int $black = 0, int $white = 0, $counter = 0): array
         $piece = $board->getPiece($rec[1], $rec[2]);
         $board->movePiece($piece, $rec[3], $rec[4]);
         printf('Learning recommended move %s%s for color %s on board %s: %s.%s', Board::translateXYToNotation($rec[1], $rec[2]), Board::translateXYToNotation($rec[3], $rec[4]), $color === 'b' ? 'black' : 'white', $board->getBoardMD5(), round($rec[0], 3), PHP_EOL);
+        $board->view();
         $turn = !$turn;
         $ml->save();
     }

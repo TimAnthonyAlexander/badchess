@@ -76,7 +76,7 @@ class Board {
     }
 
     public function checkCheck(int $checkCheck = 2): bool {
-        $king = $this->getPiecesOf('K', ($this->lastMove[2] === 'w' ? 'b' : 'w'))[0];
+        $king = $this->getPiecesOf('K', (($this->lastMove[2] ?? 'b') === 'w' ? 'b' : 'w'))[0];
         assert($king instanceof King);
         return $king->isInCheck($checkCheck-1);
     }
@@ -117,16 +117,6 @@ class Board {
         $white['score'] = 0;
         $black['score'] = 0;
 
-        foreach ($white['pieces'] as $whitePiece) {
-            assert($whitePiece instanceof Piece);
-            $white['score'] += self::PIECE_WORTH[$whitePiece->getNotation()];
-        }
-
-        foreach ($black['pieces'] as $blackPiece) {
-            assert($blackPiece instanceof Piece);
-            $black['score'] += self::PIECE_WORTH[$blackPiece->getNotation()];
-        }
-
         foreach ($black['pieces'] as $blackPiece) {
             assert($blackPiece instanceof Piece);
             // Check if position is identical to default
@@ -165,19 +155,14 @@ class Board {
             }
         }
 
+        foreach ($white['pieces'] as $whitePiece) {
+            assert($whitePiece instanceof Piece);
+            $white['score'] += self::PIECE_WORTH[$whitePiece->getNotation()];
+        }
 
-        if ($level > 0){
-            $currentTurn = ($this->lastMove[2] ?? 'b') === 'w' ? 'b' : 'w';
-
-            $randomMoves = $this->getMovesOf($currentTurn);
-
-            foreach($randomMoves as $randomMove){
-                $fakeBoard = clone $this;
-                $fakeBoard->movePiece($randomMove[0], $randomMove[1], $randomMove[2], true);
-                $white['score'] += $fakeBoard->evaluateBoard($level-1) * 0.0001;
-                // Remove fakeBoard object instance
-                $fakeBoard = null;
-            }
+        foreach ($black['pieces'] as $blackPiece) {
+            assert($blackPiece instanceof Piece);
+            $black['score'] += self::PIECE_WORTH[$blackPiece->getNotation()];
         }
 
         $whiteMoves = $this->getMovesOf('w');
