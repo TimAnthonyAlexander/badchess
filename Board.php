@@ -3,6 +3,8 @@ namespace chess;
 
 
 class Board {
+    public const EVAL_LEVEL = 3;
+
     private const PIECE_CLASSES = [
         'pawn' => Pawn::class,
         'rook' => Rook::class,
@@ -29,14 +31,30 @@ class Board {
 
     private array $recommendations = [];
 
+    /**
+     *
+     */
     public function __construct(private ML $ml, private bool $eval = true) {
         $this->init();
     }
 
+    /**
+     * @TODO Describe getPiece
+     * @param int $x
+     * @param int $y
+     * @return \chess\Piece|null
+     */
     public function getPiece(int $x, int $y): ?Piece {
         return $this->board[$x-1][$y-1] ?? null;
     }
 
+    /**
+     * @TODO Describe runGame
+     * @param array $game
+     * @param bool  $view
+     * @return void
+     * @throws \Exception
+     */
     public function runGame(array $game, bool $view = false) {
         $moveNum = 1;
         foreach ($game as $move) {
@@ -46,7 +64,7 @@ class Board {
             }
             $movePiece = $this->movePiece($piece, $x, $y);
             if ($view && $movePiece) {
-                $eval = $this->eval ? $this->evaluateBoard(1) : 0;
+                $eval = $this->eval ? $this->evaluateBoard(self::EVAL_LEVEL) : 0;
                 print(PHP_EOL);
                 $lastMove = $this->lastMove;
                 if (!isset($lastMove[2])) {
@@ -77,12 +95,21 @@ class Board {
         print('Game ran successfully'.PHP_EOL);
     }
 
+    /**
+     * @TODO Describe checkCheck
+     * @param int $checkCheck
+     * @return bool
+     */
     public function checkCheck(int $checkCheck = 2): bool {
         $king = $this->getPiecesOf('K', (($this->lastMove[2] ?? 'b') === 'w' ? 'b' : 'w'))[0];
         assert($king instanceof King);
         return $king->isInCheck($checkCheck-1);
     }
 
+    /**
+     * @TODO Describe checkMate
+     * @return bool
+     */
     public function checkMate(): bool {
         if ($this->checkCheck(2)){
             $king = $this->getPiecesOf('K', ($this->lastMove[2] === 'w' ? 'b' : 'w'))[0];
@@ -97,6 +124,10 @@ class Board {
         return false;
     }
 
+    /**
+     * @TODO Describe isCheck
+     * @return void
+     */
     public function isCheck(): void {
         if ($this->checkCheck()) {
             print('Check!'.PHP_EOL);
@@ -106,7 +137,17 @@ class Board {
         }
     }
 
-    public function evaluateBoard(int $level = 1, bool $useML = true): float {
+    /**
+     * @TODO Describe evaluateBoard
+     * @param int  $level
+     * @param bool $useML
+     * @return float
+     */
+    public function evaluateBoard(int $level = self::EVAL_LEVEL, bool $useML = true): float {
+        if ($level === 0) {
+            return 0;
+        }
+
         $data = $this->ml->get('eval_'.$this->getBoardMD5());
         if ($data !== null && $useML) {
             return $data;
@@ -167,8 +208,24 @@ class Board {
             }
         }
 
+        $lastMove = $this->getLastMove()[2] ?? 'b';
+
         $whiteMoves = $this->getMovesOf('w');
         $blackMoves = $this->getMovesOf('b');
+
+        $interestingMoves = $lastMove === 'w' ? $blackMoves : $whiteMoves;
+        foreach ($interestingMoves as $interestingMove) {
+            $fakeBoard = clone $this;
+            if ($fakeBoard->movePiece($interestingMove[0], $interestingMove[1], $interestingMove[2], true)){
+                $scoreColor = $fakeBoard->getLastMove()[2] === 'w' ? 'black' : 'white';
+                $eval = $fakeBoard->evaluateBoard($level - 1) * 0.2;
+                if ($scoreColor === 'white') {
+                    $white['score'] += $eval * 0.1;
+                } else {
+                    $black['score'] += $eval * 0.1;
+                }
+            }
+        }
 
         $white['moves'] = count($whiteMoves);
         $black['moves'] = count($blackMoves);
@@ -181,12 +238,18 @@ class Board {
         return $return;
     }
 
-    public function recommendMove(float $eval, bool $useML = true): array {
+    /**
+     * @TODO Describe recommendMove
+     * @param float $eval
+     * @param bool  $useML
+     * @param int   $level
+     * @return array|int[]
+     */
+    public function recommendMove(float $eval, bool $useML = true, int $level = 1): array {
         $data = $this->ml->get('rec_'.$this->getBoardMD5());
         if ($data !== null && $useML) {
             return $data;
         }
-        $score = $eval;
 
         $currentTurn = ($this->lastMove[2] ?? 'b') === 'w' ? 'b' : 'w';
 
@@ -194,19 +257,37 @@ class Board {
         $moveEvals = [];
         $this->recommendations = [];
 
-        $highestScore= [0, 0, 0];
+        $highestScore = [($currentTurn === 'w' ? -99999999 : 9999999), 0, 0];
+
+        if ($level === 0) {
+            return [$randomMoves[0][0], $randomMoves[0][1], $randomMoves[0][2]];
+        }
+
+        $evaluations = [];
 
         foreach ($randomMoves as $randomMove) {
             $fakeBoard = clone $this;
-            $fakeBoard->movePiece($randomMove[0], $randomMove[1], $randomMove[2], true);
-            $fakeScore = $fakeBoard->evaluateBoard();
-            $moveEvals[$randomMove[0]->getNotation() . $randomMove[1] . $randomMove[2]] = $fakeScore;
-            if ($currentTurn === 'w' ? $fakeScore > $score : $fakeScore < $score){
-                $score = $fakeScore;
-                $highestScore = [$fakeScore, $randomMove[0]->getX(), $randomMove[0]->getY(), $randomMove[1], $randomMove[2]];
+            if ($fakeBoard->movePiece($randomMove[0], $randomMove[1], $randomMove[2], true)){
+                $fakeScore = $fakeBoard->evaluateBoard(self::EVAL_LEVEL);
+                $moveEvals[$randomMove[0]->getNotation() . $randomMove[1] . $randomMove[2]] = $fakeScore;
+                $evaluations[] = [$fakeScore, $randomMove[0]->getX(), $randomMove[0]->getY(), $randomMove[1], $randomMove[2]];
             }
             // Remove fakeBoard object instance
             $fakeBoard = null;
+        }
+
+        if ($currentTurn === 'w') {
+            foreach ($evaluations as $eval) {
+                if ($eval[0] > $highestScore[0]) {
+                    $highestScore = $eval;
+                }
+            }
+        } else {
+            foreach ($evaluations as $eval) {
+                if ($eval[0] < $highestScore[0]) {
+                    $highestScore = $eval;
+                }
+            }
         }
 
         // Sort moves from highest to lowest value, keep keys
@@ -221,6 +302,10 @@ class Board {
         return $highestScore;
     }
 
+    /**
+     * @TODO Describe init
+     * @return void
+     */
     public function init() {
         for ($x = 0; $x < 8; $x++) {
             for ($y = 0; $y < 8; $y++) {
@@ -230,10 +315,19 @@ class Board {
         $this->default();
     }
 
+    /**
+     * @TODO Describe setPiece
+     * @param \chess\Piece $piece
+     * @return void
+     */
     private function setPiece(Piece $piece) {
         $this->board[$piece->getX()-1][$piece->getY()-1] = $piece;
     }
 
+    /**
+     * @TODO Describe default
+     * @return void
+     */
     private function default(): void {
         $this->setPiece(new Pawn(1, 2, 'w', $this));
         $this->setPiece(new Pawn(2, 2, 'w', $this));
@@ -270,10 +364,20 @@ class Board {
         $this->setPiece(new King(5, 8, 'b', $this));
     }
 
+    /**
+     * @TODO Describe getPieceByNotation
+     * @param string $notation
+     * @return \chess\Piece|null
+     */
     public function getPieceByNotation(string $notation): ?Piece {
         return $this->getPiece(...self::translateNotationToXY($notation));
     }
 
+    /**
+     * @TODO Describe translateNotationToXY
+     * @param string $notation
+     * @return array
+     */
     public static function translateNotationToXY(string $notation): array {
         $letter = substr($notation, 0, 1);
         $number = (int) substr($notation, 1);
@@ -282,12 +386,24 @@ class Board {
         return [$x, $y];
     }
 
+    /**
+     * @TODO Describe translateXYToNotation
+     * @param int $x
+     * @param int $y
+     * @return string
+     */
     public static function translateXYToNotation(int $x, int $y): string {
         $letter = chr(ord('A') + $x - 1);
         $number = $y;
         return $letter . $number;
     }
 
+    /**
+     * @TODO Describe translateNormalNotationToAction
+     * @param \chess\Board $board
+     * @param string       $notation
+     * @return array
+     */
     public static function translateNormalNotationToAction(Board $board, string $notation): array {
         // Notation: E2E4
         $firstPosX = substr($notation, 0, 1);
@@ -305,6 +421,12 @@ class Board {
         return [$piece, $x2, $y2];
     }
 
+    /**
+     * @TODO Describe getPiecesOf
+     * @param string $notation
+     * @param string $color
+     * @return array
+     */
     public function getPiecesOf(string $notation, string $color): array {
         $pieces = [];
         foreach ($this->board as $row) {
@@ -317,6 +439,15 @@ class Board {
         return $pieces;
     }
 
+    /**
+     * @TODO Describe movePiece
+     * @param \chess\Piece $piece
+     * @param int          $x
+     * @param int          $y
+     * @param bool         $fake
+     * @param bool         $last
+     * @return bool
+     */
     public function movePiece(Piece $piece, int $x, int $y, bool $fake = false, bool $last = false): bool {
         if ($fake) {
             $piece = clone $piece;
@@ -349,6 +480,10 @@ class Board {
         return false;
     }
 
+    /**
+     * @TODO Describe isMate
+     * @return void
+     */
     public function isMate(): void {
         $checkFor = $this->lastMove[2] === 'w' ? 'b' : 'w';
         $allPiecesOf = $this->getAllPiecesOf($checkFor);
@@ -361,6 +496,11 @@ class Board {
         $this->isMate = true;
     }
 
+    /**
+     * @TODO Describe getAllPiecesOf
+     * @param string $color
+     * @return array
+     */
     public function getAllPiecesOf(string $color = 'w'): array {
         $pieces = [];
         foreach ($this->board as $row) {
@@ -373,6 +513,10 @@ class Board {
         return $pieces;
     }
 
+    /**
+     * @TODO Describe getAllPieces
+     * @return array
+     */
     public function getAllPieces(): array {
         $pieces = [];
         foreach ($this->board as $row) {
@@ -385,6 +529,12 @@ class Board {
         return $pieces;
     }
 
+    /**
+     * @TODO Describe getMovesOf
+     * @param string $color
+     * @param int    $limit
+     * @return array
+     */
     public function getMovesOf(string $color, int $limit = 0): array {
         $moves = [];
         $i = 0;
@@ -398,6 +548,10 @@ class Board {
         return $moves;
     }
 
+    /**
+     * @TODO Describe getMoves
+     * @return array
+     */
     public function getMoves(): array {
         $pieces = $this->getAllPieces();
         $moves = [];
@@ -409,6 +563,14 @@ class Board {
         return $moves;
     }
 
+    /**
+     * @TODO Describe generatePiece
+     * @param string $pieceType
+     * @param string $color
+     * @param int    $x
+     * @param int    $y
+     * @return void
+     */
     public function generatePiece(string $pieceType, string $color, int $x, int $y) {
         $pieceClass = self::PIECE_CLASSES[$pieceType];
         $piece = new $pieceClass($x, $y, $this);
@@ -416,6 +578,10 @@ class Board {
         $this->board[$x][$y] = $piece;
     }
 
+    /**
+     * @TODO Describe view
+     * @return void
+     */
     public function view() {
         $lastMove = $this->lastMove;
         if (!isset($lastMove[0]) && !isset($lastMove[1])) {
@@ -435,10 +601,18 @@ class Board {
         echo PHP_EOL.'( A)( B)( C)( D)( E)( F)( G)( H)'.PHP_EOL.PHP_EOL;
     }
 
+    /**
+     * @TODO Describe getBoardMD5
+     * @return string
+     */
     public function getBoardMD5(): string {
         return md5(json_encode($this->getBoard()));
     }
 
+    /**
+     * @TODO Describe getIsMate
+     * @return array
+     */
     public function getIsMate(): array{
         $count = $this->getMovesOf('black');
         if ($this->isMate && count($count) === 0) {
@@ -456,6 +630,10 @@ class Board {
         return $this->recommendations;
     }
 
+    /**
+     * @TODO Describe getBoard
+     * @return array
+     */
     public function getBoard(): array {
         $boardData = [];
         foreach ($this->board as $key => $row) {

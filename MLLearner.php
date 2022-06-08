@@ -45,9 +45,9 @@ function entireGame(ML $ml, int $black = 0, int $white = 0, $counter = 0): array
             return entireGame($ml, $black, $white, $counter);
         }
         $randomMove = $possibleMoves[rand(0, count($possibleMoves) - 1)];
-        $rec = $random ? $randomMove : $board->recommendMove($board->evaluateBoard(3));
+        $rec = $random ? $randomMove : $board->recommendMove($board->evaluateBoard(Board::EVAL_LEVEL));
         if(!isset($rec[3])){
-            $rec = $board->recommendMove($board->evaluateBoard(3, false), false);
+            $rec = $board->recommendMove($board->evaluateBoard(Board::EVAL_LEVEL, false), false);
         }
         if(!isset($rec[3])){
             $randomMove = $possibleMoves[rand(0, count($possibleMoves) - 1)];
