@@ -2,21 +2,9 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="e04ccfec-ed35-4c70-a243-f95daca32696" name="Changes" comment="">
-      <change afterPath="$PROJECT_DIR$/composer.lock" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/tests/BoardTest.php" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/chess.iml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/chess.iml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/inspectionProfiles/Project_Default.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/inspectionProfiles/Project_Default.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/php.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/php.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Board.php" beforeDir="false" afterPath="$PROJECT_DIR$/Board.php" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/MLLearner.php" beforeDir="false" afterPath="$PROJECT_DIR$/MLLearner.php" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/composer.json" beforeDir="false" afterPath="$PROJECT_DIR$/composer.json" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/learnt.json" beforeDir="false" afterPath="$PROJECT_DIR$/learnt.json" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/vendor/composer/autoload_classmap.php" beforeDir="false" afterPath="$PROJECT_DIR$/vendor/composer/autoload_classmap.php" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/vendor/composer/autoload_psr4.php" beforeDir="false" afterPath="$PROJECT_DIR$/vendor/composer/autoload_psr4.php" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/vendor/composer/autoload_real.php" beforeDir="false" afterPath="$PROJECT_DIR$/vendor/composer/autoload_real.php" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/vendor/composer/autoload_static.php" beforeDir="false" afterPath="$PROJECT_DIR$/vendor/composer/autoload_static.php" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/versus.php" beforeDir="false" afterPath="$PROJECT_DIR$/versus.php" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -28,7 +16,7 @@
     <execution />
   </component>
   <component name="DarkyenusTimeTracker">
-    <option name="totalTimeSeconds" value="39337" />
+    <option name="totalTimeSeconds" value="41708" />
     <option name="idleThresholdMs" value="360000" />
     <option name="ideTimePattern" value="{{lh &quot;hour&quot;s}} {{lm &quot;minutes&quot;}}" />
     <option name="gitTimePattern" value="{{lh&quot;h&quot;}} {{lm&quot;m&quot;}}" />
@@ -164,7 +152,8 @@
       <workItem from="1654239808182" duration="26802000" />
       <workItem from="1654553230694" duration="6320000" />
       <workItem from="1654581068119" duration="3000" />
-      <workItem from="1654676226752" duration="4159000" />
+      <workItem from="1654676226752" duration="5374000" />
+      <workItem from="1654687129060" duration="1270000" />
     </task>
     <servers />
   </component>

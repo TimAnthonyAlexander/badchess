@@ -4,6 +4,7 @@ namespace chess;
 
 class Board {
     public const EVAL_LEVEL = 3;
+    public const EVAL_COMPLEXITY_SCALE = 3;
 
     private const PIECE_CLASSES = [
         'pawn' => Pawn::class,
@@ -141,9 +142,14 @@ class Board {
      * @TODO Describe evaluateBoard
      * @param int  $level
      * @param bool $useML
+     * @param int  $complexity
      * @return float
      */
-    public function evaluateBoard(int $level = self::EVAL_LEVEL, bool $useML = true): float {
+    public function evaluateBoard(
+        int $level = self::EVAL_LEVEL,
+        bool $useML = true,
+        int $complexity = self::EVAL_COMPLEXITY_SCALE
+    ): float {
         if ($level === 0) {
             return 0;
         }
@@ -173,16 +179,7 @@ class Board {
         foreach ($black['pieces'] as $blackPiece) {
             assert($blackPiece instanceof Piece);
             // Check if position is identical to default
-            $notation = $blackPiece->getNotation();
-            $isDefault = match($notation){
-                'P' => in_array([$blackPiece->getX(), $blackPiece->getY()], [[1, 7], [2, 7], [3, 7], [4, 7], [5, 7], [6, 7], [7, 7], [8, 7]]),
-                'R' => in_array([$blackPiece->getX(), $blackPiece->getY()], [[1, 8], [8, 8]]),
-                'N' => in_array([$blackPiece->getX(), $blackPiece->getY()], [[2, 8], [7, 8]]),
-                'B' => in_array([$blackPiece->getX(), $blackPiece->getY()], [[3, 8], [6, 8]]),
-                'Q' => [$blackPiece->getX(), $blackPiece->getY()] == [4, 8],
-                'K' => [$blackPiece->getX(), $blackPiece->getY()] == [5, 8],
-                default => false,
-            };
+            $isDefault = $blackPiece->getLastMove() === [];
 
             if ($isDefault) {
                 $black['score'] -= self::PIECE_WORTH[$blackPiece->getNotation()] * 0.1;
@@ -192,16 +189,7 @@ class Board {
         foreach ($white['pieces'] as $whitePiece) {
             assert($whitePiece instanceof Piece);
             // Check if position is identical to default
-            $notation = $whitePiece->getNotation();
-            $isDefault = match($notation){
-                'P' => in_array([$whitePiece->getX(), $whitePiece->getY()], [[1, 2], [2, 2], [3, 2], [4, 2], [5, 2], [6, 2], [7, 2], [8, 2]]),
-                'R' => in_array([$whitePiece->getX(), $whitePiece->getY()], [[1, 1], [8, 1]]),
-                'N' => in_array([$whitePiece->getX(), $whitePiece->getY()], [[2, 1], [7, 1]]),
-                'B' => in_array([$whitePiece->getX(), $whitePiece->getY()], [[3, 1], [6, 1]]),
-                'Q' => [$whitePiece->getX(), $whitePiece->getY()] == [4, 1],
-                'K' => [$whitePiece->getX(), $whitePiece->getY()] == [5, 1],
-                default => false,
-            };
+            $isDefault = $whitePiece->getLastMove() === [];
 
             if ($isDefault) {
                 $white['score'] -= self::PIECE_WORTH[$whitePiece->getNotation()] * 0.1;
@@ -210,15 +198,15 @@ class Board {
 
         $lastMove = $this->getLastMove()[2] ?? 'b';
 
-        $whiteMoves = $this->getMovesOf('w');
-        $blackMoves = $this->getMovesOf('b');
+        $currentTurn = $lastMove === 'w' ? 'b' : 'w';
 
-        $interestingMoves = $lastMove === 'w' ? $blackMoves : $whiteMoves;
+        $interestingMoves = $this->getMovesOf($currentTurn);
+        $moves[$currentTurn] = count($interestingMoves);
         foreach ($interestingMoves as $interestingMove) {
             $fakeBoard = clone $this;
             if ($fakeBoard->movePiece($interestingMove[0], $interestingMove[1], $interestingMove[2], true)){
                 $scoreColor = $fakeBoard->getLastMove()[2] === 'w' ? 'black' : 'white';
-                $eval = $fakeBoard->evaluateBoard($level - 1) * 0.2;
+                $eval = $fakeBoard->evaluateBoard($level - 1, complexity: $complexity - 1) * 0.2;
                 if ($scoreColor === 'white') {
                     $white['score'] += $eval * 0.1;
                 } else {
@@ -227,11 +215,7 @@ class Board {
             }
         }
 
-        $white['moves'] = count($whiteMoves);
-        $black['moves'] = count($blackMoves);
-
-        $white['score'] += $white['moves'] * 0.001;
-        $black['score'] += $black['moves'] * 0.001;
+        $white['score'] += ($lastMove === 'w' ? $moves['b'] : -$moves['w'])*0.01;
 
         $return = $white['score'] - $black['score'];
         $this->ml->set('eval_'.$this->getBoardMD5(), $return);
@@ -441,14 +425,17 @@ class Board {
 
     /**
      * @TODO Describe movePiece
-     * @param \chess\Piece $piece
-     * @param int          $x
-     * @param int          $y
-     * @param bool         $fake
-     * @param bool         $last
+     * @param \chess\Piece|null $piece
+     * @param int               $x
+     * @param int               $y
+     * @param bool              $fake
+     * @param bool              $last
      * @return bool
      */
-    public function movePiece(Piece $piece, int $x, int $y, bool $fake = false, bool $last = false): bool {
+    public function movePiece(?Piece $piece, int $x, int $y, bool $fake = false, bool $last = false): bool {
+        if ($piece === null) {
+            return false;
+        }
         if ($fake) {
             $piece = clone $piece;
         }
@@ -539,11 +526,11 @@ class Board {
         $moves = [];
         $i = 0;
         foreach ($this->getAllPiecesOf($color) as $piece) {
-            if ($i === $limit && $limit !== 0) {
-                continue;
-            }
             $moves = array_merge($moves, $piece->getMoves());
             $i++;
+            if ($i === $limit && $limit !== 0) {
+                break;
+            }
         }
         return $moves;
     }
