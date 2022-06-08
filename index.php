@@ -21,14 +21,27 @@ if (!isset($_SESSION['board'])) {
 $board = $_SESSION['board'];
 
 
+if ($_POST['reset'] ?? '' === 'reset') {
+    $board = new Board($ml);
+    $_SESSION['board'] = $board;
+}
+
 if ($_POST['move'] ?? false) {
     $action = Board::translateNormalNotationToAction($board, strtoupper($_POST['move']));
-    $movePiece = $board->movePiece($action[0], $action[1], $action[2]);
-    if ($movePiece){
+    $piece = $action[0];
+    if ($piece !== null){
+        $movePiece = $board->movePiece($piece, $action[1], $action[2]);
+    } else {
+        $movePiece = false;
+    }
+    if ($movePiece) {
         $eval = $board->evaluateBoard();
         $rec = $board->recommendMove($eval);
         if ($rec[1] !== null){
-            $board->movePiece($board->getPiece($rec[1], $rec[2]), $rec[3], $rec[4]);
+            $piece = $board->getPiece($rec[1], $rec[2]);
+            if ($piece !== null){
+                $board->movePiece($piece, $rec[3], $rec[4]);
+            }
         } else {
             $randomMove = $board->getMovesOf('b', 1);
             $randomMove = $randomMove[array_rand($randomMove)];
@@ -115,19 +128,46 @@ foreach ($row as $key => $column) {
         if (isset($lastMove[1]) && $posX === $lastMove[0] && $posY === $lastMove[1]) {
             $isLast = true;
         }
+        $notation = Board::translateXYToNotation($posX, $posY);
         if (trim($piece) === '') {
-            echo '<td style="height: 62px; width: 62px; background-color: '.($isLast ? 'red' : $color).'; color: '.$textcolor.';">'.Board::translateXYToNotation($posX, $posY).' </td>';
+            echo '<td onclick="addToMove(\''.$notation.'\')" style="height: 62px; width: 62px; background-color: '.($isLast ? 'red' : $color).'; color: '.$textcolor.';">'.$notation.' </td>';
         } else{
-            echo '<td style="height: 62px; width: 62px; background-color: ' . ($isLast ? 'red' : $color) . '; color: ' . $textcolor . '"><img src="'.getImage($piece).'"></td>';
+            echo '<td onclick="addToMove(\''.$notation.'\')" style="height: 62px; width: 62px; background-color: ' . ($isLast ? 'red' : $color) . '; color: ' . $textcolor . '"><img src="'.getImage($piece).'"></td>';
         }
     }
     echo '</tr>';
 }
 echo '</table>';
 
+echo "<script>";
+echo "function addToMove(notation){";
+echo "var move = document.getElementById('move');";
+echo "move.value = move.value + notation;";
+echo "if (move.value.length === 4){";
+// Submit
+echo "document.getElementById('moveForm').submit();";
+echo "}";
+echo "}";
+echo "</script>";
+
 // Form to send the move
-echo '<form action="" method="post">';
-echo '<input type="text" name="move" autofocus>';
+echo '<form action="" id="moveForm" method="post">';
+echo '<input type="text" id="move" name="move" autofocus>';
 echo '<input type="submit" value="Send">';
 echo '</form>';
 
+$board->recommendMove($eval);
+$recs = $board->getRecommendations();
+
+print("<h3>Recommendations for white:</h3>");
+foreach ($recs as $key => $value) {
+    $move = substr($key, 1, 2);
+    $move = $key[0] .Board::translateXYToNotation($move[0], $move[1]);
+    print ("<h4>" . $move . ": " . $value . "</h4>");
+}
+
+// Form to reset
+echo '<form action="" method="post">';
+echo '<input type="hidden" name="reset" value="reset">';
+echo '<input type="submit" value="Reset">';
+echo '</form>';

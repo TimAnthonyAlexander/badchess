@@ -27,6 +27,8 @@ class Board {
 
     private bool $isMate = false;
 
+    private array $recommendations = [];
+
     public function __construct(private ML $ml, private bool $eval = true) {
         $this->init();
     }
@@ -189,6 +191,8 @@ class Board {
         $currentTurn = ($this->lastMove[2] ?? 'b') === 'w' ? 'b' : 'w';
 
         $randomMoves = $this->getMovesOf($currentTurn);
+        $moveEvals = [];
+        $this->recommendations = [];
 
         $highestScore= [0, 0, 0];
 
@@ -196,6 +200,7 @@ class Board {
             $fakeBoard = clone $this;
             $fakeBoard->movePiece($randomMove[0], $randomMove[1], $randomMove[2], true);
             $fakeScore = $fakeBoard->evaluateBoard();
+            $moveEvals[$randomMove[0]->getNotation() . $randomMove[1] . $randomMove[2]] = $fakeScore;
             if ($currentTurn === 'w' ? $fakeScore > $score : $fakeScore < $score){
                 $score = $fakeScore;
                 $highestScore = [$fakeScore, $randomMove[0]->getX(), $randomMove[0]->getY(), $randomMove[1], $randomMove[2]];
@@ -203,6 +208,14 @@ class Board {
             // Remove fakeBoard object instance
             $fakeBoard = null;
         }
+
+        // Sort moves from highest to lowest value, keep keys
+        asort($moveEvals);
+        if ($currentTurn === 'w') {
+            $moveEvals = array_reverse($moveEvals, true);
+        }
+
+        $this->recommendations = $moveEvals;
 
         $this->ml->set('rec_'.$this->getBoardMD5(), $highestScore);
         return $highestScore;
@@ -434,6 +447,13 @@ class Board {
             return [true, 'b'];
         }
         return [false, null];
+    }
+
+    /**
+     * @return array
+     */
+    public function getRecommendations(): array{
+        return $this->recommendations;
     }
 
     public function getBoard(): array {

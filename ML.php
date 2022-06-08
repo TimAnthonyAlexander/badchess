@@ -11,9 +11,9 @@ class ML {
     public function __construct() {
         if (!file_exists(self::FILE)) {
             // Create file
-            file_put_contents(self::FILE, json_encode([]));
+            $this->save();
         }
-        $this->firstData = $this->data = json_decode(file_get_contents(self::FILE), true);
+        $this->firstData = $this->data = json_decode(file_get_contents(self::FILE), true, 512, JSON_THROW_ON_ERROR);
     }
 
     public function get(string $key) {
@@ -26,7 +26,7 @@ class ML {
 
     public function save() {
         asort($this->data);
-        file_put_contents(self::FILE, json_encode($this->data, JSON_PRETTY_PRINT));
+        @file_put_contents(self::FILE, json_encode($this->data, JSON_THROW_ON_ERROR));
     }
 
     public function __destruct() {
