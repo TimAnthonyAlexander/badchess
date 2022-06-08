@@ -5,7 +5,7 @@ Everything is programmed in PHP without the use of any library. (Yikes)
 
 <hr>
 <h2>Installation</h2>
-Clone the repository, install PHP 8.1, run `composer dumpautoload`, start a php server with `php -S 127.0.0.1:3333 -t .` inside the directory (might need sudo for that) and open the page http://127.0.0.1:3333 in your browser or instead run `php versus.php` in the command line. (No running server required for versus.php)
+Clone the repository, install PHP 8.1, run <pre>composer dumpautoload</pre>Start a php server with <pre>php -S 127.0.0.1:3333 -t .</pre> inside the directory (might need sudo for that) and open the page http://127.0.0.1:3333 in your browser or instead run <pre>php versus.php</pre> in the command line. (No running server required for versus.php)
 
 <hr>
 <h2>Screenshots</h2>
